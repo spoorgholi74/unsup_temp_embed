@@ -33,7 +33,7 @@ from models.training_embed import load_model, training
 
 
 class Corpus(object):
-    def __init__(self, Q, subaction='coffee'):
+    def __init__(self, Q, subaction='coffee', K=None):
         """
         Args:
             Q: number of Gaussian components in each mixture
@@ -42,7 +42,7 @@ class Corpus(object):
         np.random.seed(opt.seed)
         self.gt_map = GroundTruth()
         self.gt_map.load_mapping()
-        self._K = self.gt_map.define_K(subaction=subaction)
+        self._K = self.gt_map.define_K(subaction=subaction) if K is None else K
         logger.debug('%s  subactions: %d' % (subaction, self._K))
         self.iter = -1
         self.return_stat = {}
@@ -68,10 +68,6 @@ class Corpus(object):
         self._features = None
         self._embedded_feat = None
         self._init_videos()
-        logger.debug('min: %f  max: %f  avg: %f' %
-                     (np.min(self._features),
-                      np.max(self._features),
-                      np.mean(self._features)))
 
         if opt.ordering:
             self.rho_sampling()
@@ -124,6 +120,9 @@ class Corpus(object):
         logger.debug('gt statistic: %d videos ' % len(self._videos) + str(gt_stat))
         self._update_fg_mask()
 
+    def __len__(self):
+        return len(self._videos)
+
     def _update_fg_mask(self):
         logger.debug('.')
         if self._with_bg:
@@ -132,6 +131,17 @@ class Corpus(object):
                 self._total_fg_mask[np.nonzero(video.global_range)[0][video.fg_mask]] = True
         else:
             self._total_fg_mask = np.ones(len(self._features), dtype=bool)
+
+    def get_videos(self):
+        for video in self._videos:
+            yield video
+
+    def video_byidx(self, idx):
+        return np.asarray(self._videos)[idx]
+
+    def get_features(self):
+        # todo: check by reference of not
+        return self._features
 
     def regression_training(self):
         logger.debug('.')
@@ -147,7 +157,8 @@ class Corpus(object):
             model.load_state_dict(load_model(name=opt.model_name))
             self._embedding = model
         else:
-            self._embedding = training(dataloader, opt.epochs,
+            self._embedding = training(dataloader,
+                                       opt.epochs,
                                        save=opt.save_model,
                                        model=model,
                                        loss=loss,
@@ -430,10 +441,8 @@ class Corpus(object):
         for time_idx, sorted_time in enumerate(sorted(time2label)):
             label = time2label[sorted_time]
             if opt.shuffle_order:
-                # logger.debug('shuffled labels')
                 kmeans_labels[kmean.labels_ == label] = shuffle_labels[time_idx]
             else:
-                # logger.debug('time ordered labels')
                 kmeans_labels[kmean.labels_ == label] = time_idx
                 shuffle_labels = np.arange(len(time2label))
 
@@ -497,14 +506,8 @@ class Corpus(object):
         for video_idx, video in enumerate(self._videos):
             video.iter = self.iter
 
-            cur_order = video.ordering_sampler(mallow_model=self._mallow)
-            # cur_order = video.viterbi_top_perm()
-
-            # if cur_order not in pr_orders:
-            #     logger.debug(str(cur_order))
-            #     pr_orders.append(cur_order)
+            video.ordering_sampler(mallow_model=self._mallow)
             self._inv_count_stat += video.inv_count_v
-            # logger.debug('background: %d' % int(video.fg_mask.size - np.sum(video.fg_mask)))
             bg_total += int(video.fg_mask.size - np.sum(video.fg_mask))
         logger.debug('total background: %d' % bg_total)
         logger.debug('inv_count_vec: %s' % str(self._inv_count_stat))
@@ -661,20 +664,6 @@ class Corpus(object):
             # gt_plot_iter = [[0, 1], [0]][self.iter != 0]
             long_pr = [self._label2gt[i] for i in long_pr]
             vis.fit(self._embedded_feat, long_pr, 'iter_%d_' % self.iter)
-            # for gt_plot in gt_plot_iter:
-            #     vis.data = self._embedded_feat
-            #     vis.labels = [long_pr, long_gt][gt_plot]
-            #     if mode == 'pca':
-            #         vis.fit_data()
-            #     else:  # mode == 'tsne'
-            #         vis.fit_data(reduce=int(0.3 * self._features.shape[0]))
-            #     prefix = ''
-            #     if opt.gaussian_cl:
-            #         prefix += 'gmm'
-            #     if opt.rt_cl_concat:
-            #         prefix += 'cc'
-            #     vis.plot(iter=self.iter, show=False, gt_plot=gt_plot, prefix=prefix)
-            #     vis.reset()
 
             ####################################################################
             # segmentation visualisation

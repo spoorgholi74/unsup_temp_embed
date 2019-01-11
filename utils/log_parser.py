@@ -168,6 +168,8 @@ def all_subactions_parser(prefix, path):
                     # subaction
                     if 'update_opt_str - subaction:' in line:
                         subaction = line.strip().split()[-1]
+                        if subaction == 'all':
+                            subaction = 'coffee'
                         params = defaultdict(list)
                     # range
                     if 'Order of labels:' in line:
@@ -183,7 +185,8 @@ def all_subactions_parser(prefix, path):
                         search = re.search(r'frames true:\s*(\d*)\s*frames overall :\s*(\d*)', line)
                         params['frames'] = [int(search.group(1))]  # save only last frames
 
-                    if 'util_functions.py - wrap - <function temp_embed' in line:
+                    # if 'util_functions.py - wrap - <function temp_embed' in line:
+                    if 'utils.py - wrap - <function baseline' in line:
                         all_subactions[subaction] = params
             data = {'data': []}
 
@@ -286,7 +289,7 @@ if __name__ == '__main__':
     # table_joiner(prefix, log_path)
 
 
-    prefix = 'kmean.rt.cc.'
+    prefix = 'slim.mallow._all_!bg_data2_bf_embed30_epochs12_full_gmm1_one_!gt_lr1e-10_!lr_ordering_reg0.1_!viterbi_!zeros_pipeline(2019-01-08 10:13:48.442517)'
     log_path = '/media/data/kukleva/lab/Breakfast/logs'
     all_subactions_parser(prefix, log_path)
 

@@ -103,9 +103,11 @@ def training(train_loader, epochs, save, **kwargs):
 
 def load_model(name='mlp'):
     if opt.resume_str:
-        subaction = opt.subaction.split('_')[0]
-        resume_str = opt.resume_str % subaction
-        # resume_str = opt.resume_str
+        if name == 'global':
+            resume_str = opt.resume_str
+        else:
+            subaction = opt.subaction.split('_')[0]
+            resume_str = opt.resume_str % subaction
     else:
         resume_str = opt.log_str
     checkpoint = torch.load(join(opt.dataset_root, 'models', name,

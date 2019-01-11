@@ -63,7 +63,7 @@ parser.add_argument('--batch_size', default=256,
                     help='batch size for training embedding (default: 40)')
 parser.add_argument('--num_workers', default=4,
                     help='number of threads for dataloading')
-parser.add_argument('--embed_dim', default=20, type=int,
+parser.add_argument('--embed_dim', default=30, type=int,
                     help='number of dimensions in embedded space')
 parser.add_argument('--epochs', default=10, type=int,
                     help='number of epochs for training embedding')
@@ -71,6 +71,12 @@ parser.add_argument('--gt_training', default=False, type=bool,
                     help='training embedding either with gt labels '
                          'or with labels gotten from the temporal model')
 
+
+###########################################
+# hyperparams parameters for local embeddings
+parser.add_argument('--local_epoch', type=int, default=10)
+parser.add_argument('--local_dim', type=int, default=35)
+parser.add_argument('--local_lr', type=float, default=1e-4)
 
 ###########################################
 # hyperparams parameters for TCN embeddings
@@ -134,14 +140,22 @@ parser.add_argument('--resume', default=True, type=bool,
                          'epoch which should be loaded')
 parser.add_argument('--resume_str',
                     # default='',
+                    # local
                     # default='!norm.!conc._%s_mlp_!pose_full_vae0_time10.0_epochs90_embed20_n2_ordering_gmm1_one_!gt_lr0.001_lr_!zeros_b0_v1_l0_c1_',
                     # default='grid.vit._%s_mlp_!pose_full_vae1_time10.0_epochs90_embed20_n2_ordering_gmm1_one_!gt_lr0.001_lr_zeros_b0_v1_l0_c1_',
-                    default='fixed.order._%s_mlp_!pose_full_vae0_time10.0_epochs60_embed20_n1_!ordering_gmm1_one_!gt_lr0.0001_lr_zeros_b0_v1_l0_c1_',
+                    # default='fixed.order._%s_mlp_!pose_full_vae0_time10.0_epochs60_embed20_n1_!ordering_gmm1_one_!gt_lr0.0001_lr_zeros_b0_v1_l0_c1_',
                     # default='norm.conc._%s_mlp_!pose_full_vae1_time10.0_epochs60_embed20_n1_ordering_gmm1_one_!gt_lr0.0001_lr_!zeros_b0_v1_l0_c1_',
 
-                    # default='10cl.joined_full_mlp_!pose_full_vae0_time10.0_epochs45_embed35_n1_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b0_v1_l0_c1_',
-
                     # default='yti.(200,90,-3)_%s_mlp_!pose_full_vae0_time10.0_epochs90_embed200_n4_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b1_v1_l0_c1_',
+
+                    # global
+                    # default='!norm.!concat_joined_mlp_!pose_full_vae0_time10.0_epochs60_embed30_n2_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b0_v1_l0_c1_',
+                    # default='norm.concat_joined_mlp_!pose_full_vae1_time10.0_epochs30_embed20_n1_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b0_v1_l0_c1_',
+                    # default='!norm.concat_joined_mlp_!pose_full_vae1_time10.0_epochs30_embed20_n2_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b0_v1_l0_c1_',
+                    default='norm.!concat_joined_mlp_!pose_full_vae1_time10.0_epochs30_embed20_n1_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b0_v1_l0_c1_',
+
+                    # default='yti.(200.90)._joined_mlp_!pose_full_vae0_time10.0_epochs90_embed200_n4_!ordering_gmm1_one_!gt_lr0.001_lr_zeros_b1_v1_l0_c1_',
+
 
                     # default='rank._%s_rank_!pose_full_vae0_time10.0_epochs30_embed30_n2_!ordering_gmm1_one_!gt_lr1e-06_lr_!zeros_b0_v1_l0_c1_b0_',
                     # default='rank._%s_rank_!pose_full_vae0_time10.0_epochs30_embed30_n2_!ordering_gmm1_one_!gt_lr1e-06_lr_zeros_b0_v1_l0_c1_b96_',
@@ -153,14 +167,14 @@ parser.add_argument('--resume_str',
 
 ###########################################
 # additional
-parser.add_argument('--reduced', default=0, type=int,
+parser.add_argument('--reduced', default=30, type=int,
                     help='check smth using only ~15 videos')
 parser.add_argument('--grid_search', default=False, type=bool,
                     help='grid search for optimal parameters')
 parser.add_argument('--vis', default=False, type=bool,
                     help='save visualisation of embeddings')
-parser.add_argument('--model_name', default='mlp',
-                    help='mlp / tcn')
+parser.add_argument('--model_name', default='global',
+                    help='mlp / tcn / global')
 parser.add_argument('--test_set', default=False, type=bool,
                     help='check if the network if overfitted or not')
 parser.add_argument('--prefix', default='gmm.rt.cc.',
